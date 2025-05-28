@@ -1,4 +1,6 @@
-(To view the complete report, download the raw file in Optimizing Pizza Sales-bana-7024.html file)
+## 📊 View Report
+
+👉 [Click here to view the full project report](https://asjadali0391.github.io/Regork-Project-with-R/)
 
 # Optimizing Pizza Sales – BANA 7024 Final Project
 
