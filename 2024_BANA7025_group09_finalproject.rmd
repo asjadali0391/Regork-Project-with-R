@@ -1,0 +1,691 @@
+---
+title: "OPTIMIZING FROZEN PIZZA SALES STRATEGY FOR REGORK"
+author: "BANA 7025, Muhammad Ali Asjad, Enrique Rosen, Mithisha"
+date: "October, 2024"
+output:  
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    theme: cosmo
+  html_document:
+    code_folding: hide
+---
+
+```{css}
+
+
+#row-3 .chart-wrapper .chart-stage {
+  flex: 0 0 600px !important;
+    overflow: scroll;
+    padding: 5px 10px;
+    position: relative;
+    overflow: scroll;
+}
+#row-data-height-1000 {
+
+  height: 600px !important;
+  flex: 0 0 600px !important;
+}
+.section level2 dashboard-row dashboard-row-flex {
+  height: 600px !important; 
+  flex: 0 0 600px !important;
+}
+
+```
+
+```{r setup, include=FALSE}
+
+library(flexdashboard)
+library(tidyverse)
+library(completejourney)
+library(plotly)
+library(DT)
+library(lubridate)
+library(scales)
+
+# Load data
+transactions <- get_transactions()
+products 
+demographics 
+```
+
+# Introduction
+
+Row {data-height=400}
+-----------------------------------------------------------------------
+### Muhammad Ali Asjad
+![](C:/Users/asjad/Pictures/Screenshots/Screenshot 2025-05-28 011757.png)
+
+
+
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+### Introduction
+
+
+
+According to a recent report from the IMARC Group - a leading market research firm - The global frozen pizza market size reached US $ 17.6 Billion in 2023, with an expected growth rate of 5.4% by a year until 2032. This year-to-year growth presents an opportunity to capitalize on a rapidly expanding market. We believe that different age groups buy frozen pizza in various ways. In this report, we will determine obvious and some not-so-obvious relationships between the buyer's age and frozen pizza sales.
+
+We will use the Regork customers' data to see how different age groups interact with a product like Frozen pizza, like what day of the week they purchase it, what kinds of frozen pizza specifically different age groups purchase, and what else they purchase frozen pizza with. With this understanding we will be better able to target various demographics with marketing campaigns, enhancing growth in the product and providing a lucrative opportunity for Regork in the process.
+
+### Key Areas of Investigation   
+
+1. Overall sales trends of frozen pizzas
+2. Weekly and yearly sales patterns
+3. Demographic analysis of frozen pizza consumers by age
+4. Other Products Purchased with frozen pizza
+
+By exploring these areas, we aim to uncover insights that will guide Regork in allocating resources effectively and implementing targeted strategies to boost frozen pizza sales.
+
+
+# Packages/Libraries Used
+
+Row
+-----------------------------------------------------------------------
+
+### Packages/Libaries Used 
+* **library(completejourney)**---   *This packagge includes the different data sets used in this report*           
+* **library(ggplot2)**---       *For plotting different plots to visualize the data*    
+* **library(DT)**---             *For creating interactive tables using DataTables library*
+* **library(tidyverse)**--- *For manipulation and transformation of data, as well as plotting. Sub-packages used include dplyr, ggplot2, scales, and lubridate*   
+* **library(plotly)**--- *For additional plotting tools*
+* **library(flexdashboard)**--- *Used for creating interactive dashboards*
+
+
+
+# Data Overview
+
+Row
+-----------------------------------------------------------------------
+### Data Tables Used
+
+The completejourney package in R is comprised of eight different data sets but we will be using three data sets which are as follows:
+
+
+Row {.tabset .tabset-fade}
+-----------------------------------------------------------------------
+### Transactions
+
+This data set includes the transactional record of the 2,469 households at the grocery store over one year.  
+
+```{r, echo = TRUE}
+transactions <- get_transactions()
+datatable(head(transactions, 100), options = list(pageLength = 10))
+```
+
+### Products
+
+This data set includes details of the products purchased and their descriptions.
+
+```{r, echo = TRUE}
+
+datatable(head(products, 100), options = list(pageLength = 10))
+```
+
+### Demographics 
+
+This data set provides us with the demographic information of the households involved in transactions which includes size of household, income range, age, etc. 
+
+
+```{r, echo = TRUE}
+datatable(head(demographics, 100), options = list(pageLength = 10))
+```
+
+
+# Frozen Pizza Sales Trends
+
+
+Row
+-----------------------------------------------------------------------
+### **a. Sales Pattern by day of the week: Code**  
+
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE, fig.keep = "none" , results = 'hide'}
+transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  mutate(Day_of_Week = wday(transaction_timestamp, week_start = 1, label=TRUE)) %>% 
+  group_by(Day_of_Week) %>% ##groups by day of the week the transaction occurred on
+  summarize(Num_Sales_per_Day = n(), Total_Sales = sum(sales_value)) %>%
+  ggplot(aes(x=Day_of_Week,y= Total_Sales))+
+  geom_col(aes(fill = I("dodgerblue2")))+
+  labs( title= "Total Sales vs Day of the Week",
+         x= "Day of the Week",
+         y= "Total Sales")+
+  scale_y_continuous(labels = scales::dollar)
+
+
+```
+
+Row
+-----------------------------------------------------------------------
+### **a. Sales Pattern by day of the week: Graph**  
+```{r, message=FALSE, warning=FALSE}
+transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  mutate(Day_of_Week = wday(transaction_timestamp, week_start = 1, label=TRUE)) %>%
+  group_by(Day_of_Week) %>%
+  summarize(Num_Sales_per_Day = n(), Total_Sales = sum(sales_value)) %>%
+  ggplot(aes(x=Day_of_Week,y= Total_Sales))+
+  geom_col(aes(fill = I("dodgerblue2")))+
+  labs( title= "Total Sales vs Day of the Week",
+         x= "Day of the Week",
+         y= "Total Sales")+
+  scale_y_continuous(labels = scales::dollar)
+
+
+```
+
+Row {data-height = 150}
+-----------------------------------------------------------------------
+### **a Contd. Sales Pattern by day of the week by Age: Code**  
+```{r, echo = TRUE, fig.keep = "none" , results = 'hide'}
+transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  mutate(day_of_week = wday(transaction_timestamp, week_start = 1, label=TRUE)) %>%
+  select(c(day_of_week,age, sales_value)) %>%
+  group_by(day_of_week, age) %>% ##same as previous but now double grouping
+  summarize(num_sales_per_day = n(), total_sales = sum(sales_value)) %>%
+  mutate(avg_sales = total_sales / num_sales_per_day) %>%
+  ggplot(aes(x = day_of_week, y= total_sales, fill = day_of_week)) +
+  geom_col() +
+  facet_wrap(~ age, nrow = 6)+
+  labs( title = "Sales During the Week for Different Age Groups",
+        x= "Day of Week",
+        y= "Total Sales")+
+  guides(fill="none") +
+  scale_y_continuous(labels = scales::dollar)
+
+```
+
+Row
+-----------------------------------------------------------------------
+### **a Contd. Sales Pattern by day of the week by Age: Graph**  
+```{r}
+transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  mutate(day_of_week = wday(transaction_timestamp, week_start = 1, label=TRUE)) %>%
+  select(c(day_of_week,age, sales_value)) %>%
+  group_by(day_of_week, age) %>%
+  summarize(num_sales_per_day = n(), total_sales = sum(sales_value)) %>%
+  mutate(avg_sales = total_sales / num_sales_per_day) %>%
+  ggplot(aes(x = day_of_week, y= total_sales, fill = day_of_week)) +
+  geom_col() +
+  facet_wrap(~ age, nrow = 6)+
+  labs( title = "Sales During the Week for Different Age Groups",
+        x= "Day of Week",
+        y= "Total Sales")+
+  guides(fill="none") +
+  scale_y_continuous(labels = scales::dollar)
+
+```
+
+Row
+-----------------------------------------------------------------------
+### Observation:
+
+Frozen pizza sales are substantially higher on weekends, particularly on Saturdays and Sundays, with the lowest sales observed on Wednesdays.
+
+Unlike other age groups, 19-24 year olds appear to buy more consistently during the entire week than other age groups that purchase primarily during the weekends.
+
+
+
+Row
+-----------------------------------------------------------------------
+### Explanation: 
+
+Consumers tend to associate weekends with leisure and a more relaxed dining experience at home, making frozen pizza an attractive and convenient meal choice. In contrast, during weekdays, consumers are often preoccupied with work, school, and other responsibilities, resulting in lower frozen pizza purchases. Instead, they may opt for faster alternatives, such as takeout or homemade meals, which better align with their time constraints.
+
+This observed trend indicates that frozen pizza can be perceived more as a weekend indulgence rather than a regular weekday meal option. This creates a strategic opportunity to reframe frozen pizza as a convenient and efficient solution for busy weekdays, addressing consumers' need for quick and hassle-free meal options.
+
+
+Row
+-----------------------------------------------------------------------
+### **b. Total Frozen Sales By Age: Code**
+
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE, fig.keep = "none" , results = 'hide'}
+age_sales <- transactions %>% 
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  group_by(age) %>%
+  summarize(total_sales = sum(sales_value), households = n_distinct(household_id)) %>%
+  mutate(avg_sales_per_household = total_sales / households)
+
+ggplot(age_sales, aes(x = as.factor(age), y = total_sales, fill = as.factor(age))) +
+  geom_col() +
+  labs(title = "Total Frozen Pizza Sales by Age Group",
+       x = "Age Group",
+       y = "Total Sales ($)",
+       fill = "Age Group") +
+  theme_minimal()+
+  guides(fill="none") +
+  geom_text(aes(y = total_sales, label = paste0("Avg: $", round(avg_sales_per_household, 2))), 
+            vjust = -0.5, size = 3, color = "black")
+
+```
+
+
+Row
+-----------------------------------------------------------------------
+### **b. Total Frozen Sales By Age: Graph**
+
+
+```{r, message=FALSE, warning=FALSE}
+age_sales <- transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  group_by(age) %>%
+  summarize(total_sales = sum(sales_value), households = n_distinct(household_id)) %>%
+  mutate(avg_sales_per_household = total_sales / households)
+
+ggplot(age_sales, aes(x = as.factor(age), y = total_sales, fill = as.factor(age))) +
+  geom_col() +
+  labs(title = "Total Frozen Pizza Sales by Age Group",
+       x = "Age Group",
+       y = "Total Sales ($)",
+       fill = "Age Group") +
+  theme_minimal()+
+  guides(fill="none") +
+  geom_text(aes(y = total_sales, label = paste0("Avg: $", round(avg_sales_per_household, 2))), 
+            vjust = -0.5, size = 3, color = "black")
+
+```
+
+Row
+-----------------------------------------------------------------------
+### **b Contd. Average Frozen Pizza Sales by Age: Code**
+```{r, echo = TRUE, fig.keep = "none" , results = 'hide'}
+pizza_age <- transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  group_by(age) %>%
+  summarize(total_sales = sum(sales_value), households = n_distinct(household_id)) %>%
+  mutate(avg_sales_per_household = total_sales / households)
+
+##plotly is used to make an interactive graph
+plot_ly(pizza_age, x = ~age, y = ~avg_sales_per_household, type = 'scatter', mode = 'lines+markers',
+        line = list(color = I("dodgerblue2")), marker = list(color = I("dodgerblue2"))) %>%
+  layout(title = "Average Frozen Pizza Sales per Household by Age",
+         xaxis = list(title = "Age"),
+         yaxis = list(title = "Average Sales per Household ($)"))
+```
+
+Row
+-----------------------------------------------------------------------
+### **b Contd. Average Frozen Pizza Sales by Age: Graph**
+```{r, echo = FALSE}
+pizza_age <- transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  group_by(age) %>%
+  summarize(total_sales = sum(sales_value), households = n_distinct(household_id)) %>%
+  mutate(avg_sales_per_household = total_sales / households)
+
+plot_ly(pizza_age, x = ~age, y = ~avg_sales_per_household, type = 'scatter', mode = 'lines+markers',
+        line = list(color = I("dodgerblue2")), marker = list(color = I("dodgerblue2"))) %>%
+  layout(title = "Average Frozen Pizza Sales per Household by Age",
+         xaxis = list(title = "Age"),
+         yaxis = list(title = "Average Sales per Household ($)"))
+```
+
+Row
+-----------------------------------------------------------------------
+### Explanation: 
+
+If we analyze the total sales made by age category 19-24, this demographic likely includes university and college students, as well as young professionals. Individuals in this age group often face financial constraints and may prioritize more affordable and convenient meal options, such as fast food, takeout, or on-campus dining. While frozen pizza offers convenience, it may not align with their typical weekday meal preferences. 
+
+
+Row
+-----------------------------------------------------------------------
+### Insight:
+
+The 19-24 age group presents a largely untapped market opportunity. While not consuming the most frozen pizza in terms of total sales, their average pizza sales per person are the highest, signifying a large amount of interest in the product. By catering to their unique needs, including price sensitivity and the demand for convenience, frozen pizza can be repositioned as a more appealing meal choice for this younger demographic, effectively expanding its reach within this audience. Older age groups (55+) show lower sales, presenting a potential growth area if targeted with appropriate products and messaging.
+
+
+
+
+
+
+Row {{data-height = 1000}
+-----------------------------------------------------------------------
+### **c. Product Categories Purchased with Frozen Pizza: Code**
+
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE, fig.keep = "none" , results = 'hide'}
+pizza_baskets = transactions %>% ##Create list of baskets with Frozen Pizza in them
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  select(basket_id)
+ 
+transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category != "FROZEN PIZZA") %>%
+  filter(basket_id %in% pizza_baskets$basket_id) %>% ##checks if baskets have pizza
+  group_by(product_category) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>% 
+  head(8) %>% ##Show top 8 products
+  ggplot(aes(x = fct_inorder(product_category), y= count, fill =  fct_inorder(product_category))) + ##orders by count
+  guides(fill="none") +
+  geom_text(aes(label = count), vjust = -0.5, size = 2) +
+  scale_y_continuous(expand=expand_scale(mult=c(0,0.1)), limits = c(0, NA)) +
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  labs( title = "Top 8 Product Categories Frequently Purchased with Frozen Pizza",
+        x= "Product Category",
+        y= "Number of Product Sold",
+        fill = "Product Category")
+
+```
+
+Row
+-----------------------------------------------------------------------
+### **c. Product Categories Purchased with Frozen Pizza: Graph**
+
+
+```{r, message=FALSE, warning=FALSE}
+pizza_baskets = transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  select(basket_id)
+
+transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category != "FROZEN PIZZA") %>%
+  filter(basket_id %in% pizza_baskets$basket_id) %>%
+  group_by(product_category) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  head(8) %>%
+  ggplot(aes(x = fct_inorder(product_category), y= count, fill = fct_inorder(product_category))) +
+  guides(fill="none") +
+  geom_text(aes(label = count), vjust = -0.5, size = 2)+
+  scale_y_continuous(expand=expand_scale(mult=c(0,0.1)), limits = c(0, NA)) +
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  labs( title = "Top 8 Product Categories Frequently Purchased with Frozen Pizza",
+        x= "Product Category",
+        y= "Number of Product Sold",
+        fill = "Product Category")
+
+```
+
+
+Row
+-----------------------------------------------------------------------
+### Observation:
+
+Consumers who purchase frozen pizza often buy complementary products such as soft drinks, snacks, Meat Dinners, and Cheese. These items are likely part of the same meal occasion, with soft drinks and snacks serving as side items to accompany the frozen pizza.  
+
+Row
+-----------------------------------------------------------------------
+### Explanation:  
+
+Frozen pizza is often consumed in casual dining settings, either with family or friends, which makes soft drinks and snacks natural complements.
+
+The strong relationship between frozen pizza and these complementary products presents an opportunity for cross-promotional bundling. Offering meal deals that include frozen pizza, drinks, and snacks could boost sales of frozen pizza, particularly during slower sales periods like weekdays.
+
+
+Row
+-----------------------------------------------------------------------
+### **d. Top Types Of Frozen Pizza by Age Group: Code**
+
+
+```{r, echo = TRUE, fig.keep = "none" , results = 'hide'}
+top_products <- transactions %>% ##creates df with only top 5 pizza products
+  inner_join(products) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  group_by(product_type) %>%
+  summarize(total_sales = sum(sales_value)) %>%
+  arrange(desc(total_sales)) %>%
+  head(5)
+
+pizza_types_age <- transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA", product_type %in% top_products$product_type) %>%
+  group_by(age, product_type) %>%
+  summarize(total_sales = sum(sales_value)) %>%
+  ungroup()
+
+plot_ly(pizza_types_age, x = ~age, y = ~total_sales, color = ~product_type, type = 'scatter', mode = 'lines') %>%
+  layout(title = "Top Frozen Pizza Types Sales by Age Group",
+         xaxis = list(title = "Age"),
+         yaxis = list(title = "Total Sales ($)"))
+```
+
+
+Row
+-----------------------------------------------------------------------
+### **d. Top Types Of Frozen Pizza by Age Group: Graph**
+
+
+```{r}
+top_products <- transactions %>%
+  inner_join(products) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  group_by(product_type) %>%
+  summarize(total_sales = sum(sales_value)) %>%
+  arrange(desc(total_sales)) %>%
+  head(5)
+
+pizza_types_age <- transactions %>%
+  inner_join(products) %>%
+  inner_join(demographics) %>%
+  filter(product_category == "FROZEN PIZZA", product_type %in% top_products$product_type) %>%
+  group_by(age, product_type) %>%
+  summarize(total_sales = sum(sales_value)) %>%
+  ungroup()
+
+plot_ly(pizza_types_age, x = ~age, y = ~total_sales, color = ~product_type, type = 'scatter', mode = 'lines') %>%
+  layout(title = "Top Frozen Pizza Types Sales by Age Group",
+         xaxis = list(title = "Age"),
+         yaxis = list(title = "Total Sales ($)"))
+```
+
+
+
+Row
+-----------------------------------------------------------------------
+### Observation: 
+
+Certain frozen pizza types, such as SNACKS/APPETIZERS, PREMIUM PIZZA, TRADITIONAL PIZZA consistently outperform other varieties in terms of sales. These top-selling types account for a significant portion of overall frozen pizza sales.
+
+Different age groups show preferences for certain types of frozen pizzas. Younger consumers seem to prefer variety packs and premium cheese pizzas. While older ages also enjoy these products, they also purchase Pizza Sandwiches & handhelds are greater rates than the younger groups.
+
+Row
+-----------------------------------------------------------------------
+### Explanation: 
+
+These popular varieties likely appeal to a broad customer base due to their familiarity and versatility. Consumers may gravitate toward well-known pizza types that cater to common tastes.
+
+Row
+-----------------------------------------------------------------------
+### Insight: 
+
+Focusing promotional efforts on these top-selling varieties could drive further growth in frozen pizza sales. Highlighting these flavors in advertisements and bundling them with complementary products could encourage additional purchases, especially among new or less frequent buyers.
+
+The 19-24 age group shows strong interest in frozen pizza, indicating opportunities for marketing campaigns focused on convenience and affordability.
+
+Column {data-width=1600}
+-----------------------------------------------------------------------
+### **e. Frozen Pizza Sales by Day of the Year: Code**
+
+```{r, echo = TRUE, fig.keep = "none" , results = 'hide' }
+pizza_sales <- transactions %>%
+  inner_join(products) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  group_by(date = as.Date(transaction_timestamp)) %>% ##obtains day of the year
+  summarise(total_sales = sum(sales_value))
+##plotly for itneractive graph
+plot_ly(pizza_sales, x = ~date, y = ~total_sales, type = 'scatter', mode = 'lines', trendline="ols") %>%
+  layout(title = "Daily Frozen Pizza Sales",
+         xaxis = list(title = "Date"),
+         yaxis = list(title = "Total Sales ($)"))
+```
+
+
+
+Column {data-width=1600}
+-----------------------------------------------------------------------
+### **e. Frozen Pizza Sales by Day of the Year: Graph**
+
+```{r}
+pizza_sales <- transactions %>%
+  inner_join(products) %>%
+  filter(product_category == "FROZEN PIZZA") %>%
+  group_by(date = as.Date(transaction_timestamp)) %>%
+  summarise(total_sales = sum(sales_value))
+
+plot_ly(pizza_sales, x = ~date, y = ~total_sales, type = 'scatter', mode = 'lines', trendline="ols") %>%
+  layout(title = "Daily Frozen Pizza Sales",
+         xaxis = list(title = "Date"),
+         yaxis = list(title = "Total Sales ($)"))
+```
+
+Row
+-----------------------------------------------------------------------
+### Observation: 
+
+Frozen pizza sales show a relatively consistent pattern over time, indicating a stable demand for the product.
+
+
+Row
+-----------------------------------------------------------------------
+### Explanation: 
+
+Excepting spikes on individual days, people buy and enjoy frozen pizza products at consistent rates throughout the year, there appear to be no noticeable seasonal demand changes.
+
+
+
+
+# Strategic Recommendations
+
+
+Row
+-----------------------------------------------------------------------
+### **a. Increasing Frozen Pizza Sales on Weekdays**
+
+
+The main challenge is boosting sales of frozen pizza during the weekdays, which currently see much lower sales compared to weekends. Most age groups go grocery shopping primarily on the weekends. The only exception to this is the 19-24 demographic which appears to purchase more uniformly throughout the week.
+
+
+
+#### i. Targeted Weekday Coupons 
+
+We can see patterns on the different days the Coupons were redeemed and adjust the promotions to be more attractive for weekday shoppers.
+  
+For example, most number of coupons were redeemed on Saturdays and Sundays. So we can increase sales by tracking coupon usage patterns and adjusting the promotions to be more attractive for weekday shoppers. 
+
+
+A personalized digital coupon campaign may be devised. For example, offer **Buy One, Get One Free** or **20% off Frozen Pizza** for purchases made between **Monday and Wednesday**
+
+```{r, echo = TRUE}
+coupon_redemptions %>%
+  mutate(day_of_week_coupons = wday(redemption_date, week_start = 1, label=TRUE)) %>%
+  group_by(day_of_week_coupons) %>%
+  summarise( total_coupons= n()) %>%
+  ggplot(aes(x=day_of_week_coupons, y=total_coupons))+
+  geom_col(fill = I("dodgerblue2")) +
+  labs( title = "Number of Coupons Redeemed During the Week",
+        x= "Day of Week",
+        y= "Number of Coupons Redeemed")
+```
+
+
+#### ii. Cross-Promotions with Complementary Products:
+
+
+We identified the most commonly purchased products alongside frozen pizza (e.g., soft drinks, frozen meat, or snacks). Based on this, bundled deals may be designed such as "Pizza + Soft Drink Combo" or "Frozen Pizza Family Meal Deal" that offer discounts when these complementary items are purchased together.
+
+
+Row
+-----------------------------------------------------------------------
+### **b. Increasing Frozen Pizza Sales for the 19-24 Age Group**
+
+
+
+Young adults, particularly university students and young professionals, represent a key demographic that could be better engaged with frozen pizza sales. This age group currently buys less frozen pizza than other groups.
+
+
+To increase sales among the 19-24 demographic, we recommend the following strategies:
+
+#### i. Student Discounts: 
+
+Offer special promotions for students, such as discounts on frozen pizza with a student ID, or through partnerships with universities or local stores near campuses. Discount codes could also be distributed via university newsletters, student apps, or social media platforms targeting students.
+
+#### ii. Partnerships with University Dining Services or Nearby Retailers:
+
+
+We can consider collaborating with university dining halls to offer frozen pizza in meal plans or as a takeaway option for students. For retail stores near campuses, we may offer student-specific promotions on frozen pizzas, particularly during exam periods when students are likely to seek out convenient meals.
+
+#### iii. Bundling for Affordability: 
+
+
+As students tend to be price-sensitive, we can offer affordable meal deals or bundles that include frozen pizza with other student-friendly products (e.g., snacks, energy drinks, soft drinks). These bundles could be marketed as **study fuel** or **late-night snacks** to appeal to the younger buyers. 
+
+
+
+
+Row
+-----------------------------------------------------------------------
+### **Conclusions**
+
+Our goal was to find ways to increase frozen pizza sales. We did this is a number of key ways. Research was done into investigating how frozen pizza was purchased, such as the dates and times of when such purchased occurred. We also researched the demographics of frozen pizza buyers with respect to age and household. We also looked into hat other products consumers purchased their pizza with.
+
+**Our Key Insights:**
+
+   - We found that most consumers purchase their pizza during the weekends **except** the 19-24 age group. 
+   - We found that frozen pizza sales are consistent throughout the year.
+   - The 19-24 Age group - although it does not buy the most frozen pizza - it buys the most per person
+   - The most common items purchased along with frozen pizza are items such as Frozen Meets, Soft Drinks, Cheese, and various snack products
+   - Younger Frozen Pizza Buyers are far less likely to buy frozen pizza products like cheap frozen pizzas or pizza sandwiches (calzones) than older demographics
+
+
+**Recommendations**
+
+1. **Increase Weekday Sales**
+   - Sales are currently lowest between Mondays and Wednesdays
+   - Focus on promotional campaigns and offering coupons to those who shop on these days
+   - Offer cross-promotions w/other products popular with Frozen Pizza Buyers such as SOft Drinks, offering a discount for combined purchases
+
+2. **Target 19-24 year olds**
+   - They are only age group that doesn't favor weekend shopping
+   - They have the highest average pizza sales per person
+   - Distribute discounts/coupons at local Universities or w/proof of a valid student ID 
+   - Sell affordable meal/snack bundles to appeal to price-sensitive young buyers
+
+By implementing these strategies, Regork can optimize its frozen pizza sales, enhance customer experience, and drive overall growth in this key product category.
+
+Row
+-----------------------------------------------------------------------
+### **Limitations**
+   - Our data was only taken over one year, there is a potential for our insights to no longer hold true in different years. Data taken over a multi-year period could solve this.
+   - Since 19-24 year olds are already spending more than other age groups on pizza and they have less disposable income, there is a possibility that they are reaching a limit on how much their purchasing can be increased
+   - We know what products are purchased alongside frozen pizza, but we do not have data on what they are pairing their frozen pizza meal with. It is unlikely that the most-purchased product alongside frozen pizza (meat dinners) is being eaten at the same meal. Surveys would have to be conducted in order to find this relationship
+
+# Works Cited
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Works Cited
+
+[1] “Frozen Pizza Market Dynamics & Key Player Profiles.” Dynamics & Key Player Profiles [2032], imarc, 2024, www.imarcgroup.com/frozen-pizza-market. 
