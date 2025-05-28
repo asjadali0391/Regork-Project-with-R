@@ -1,6 +1,6 @@
-## 📊 View Report
+                                            # View Report
 
-👉 [Click here to view the full project report](https://asjadali0391.github.io/Regork-Project-with-R/)
+                                           👉 [Click here to view the full project report](https://asjadali0391.github.io/Regork-Project-with-R/)
 
 # Optimizing Pizza Sales – BANA 7024 Final Project
 
